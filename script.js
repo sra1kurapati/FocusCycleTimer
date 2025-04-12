@@ -1,4 +1,4 @@
-// --- script.js (Corrected for Web Worker) ---
+// --- script.js (Corrected for Web Worker, using bell.wav) ---
 
 // --- DOM Element References ---
 // Ensure all these elements exist in your index.html with the correct IDs!
@@ -28,6 +28,16 @@ let worker = null; // Variable to hold the timer worker instance
 let currentSecondsRemaining = FOCUS_TIME_MINUTES * SECONDS_IN_MINUTE; // Track locally for display sync
 let currentTotalSeconds = FOCUS_TIME_MINUTES * SECONDS_IN_MINUTE;
 
+// --- Audio ---
+// Create an Audio object for the focus completion sound
+const focusCompleteSound = new Audio('bell.wav'); // *** Use the .wav file ***
+focusCompleteSound.onerror = () => {
+    // Log an error if the sound file can't be loaded
+    console.error("Error loading the sound file ('bell.wav'). Make sure it's in the same folder as index.html."); // Updated error message
+};
+// Optional: You could preload the sound if you want
+// focusCompleteSound.preload = 'auto';
+
 
 // --- Utility Functions ---
 
@@ -47,10 +57,8 @@ function updateDisplay(seconds, totalSecs) {
     // Defensive check for valid numbers
     if (typeof seconds !== 'number' || typeof totalSecs !== 'number') {
         console.warn("updateDisplay called with invalid time values:", seconds, totalSecs);
-        // Potentially set a default display like "??:??" or use last known good values
-         seconds = currentSecondsRemaining; // Fallback to last known state
-         totalSecs = currentTotalSeconds; // Fallback
-         // return; // Or just stop if data is bad
+        seconds = currentSecondsRemaining; // Fallback to last known state
+        totalSecs = currentTotalSeconds; // Fallback
     }
 
     const formattedTime = formatTime(seconds);
@@ -61,7 +69,6 @@ function updateDisplay(seconds, totalSecs) {
     // Calculate percentage elapsed (ensure totalSecs is not zero)
     let percentageElapsed = 0;
     if (totalSecs > 0) {
-        // Ensure we don't go over 100% or below 0% due to timing issues
         percentageElapsed = Math.max(0, Math.min(100, ((totalSecs - seconds) / totalSecs) * 100));
     }
 
@@ -73,9 +80,8 @@ function updateDisplay(seconds, totalSecs) {
     try { // Add error handling for car movement just in case
         if (currentMode === 'focus' && appContainer && timerCar) {
             const containerWidth = appContainer.offsetWidth;
-            // Use getBoundingClientRect for more reliable width, fallback to offsetWidth/default
             const carWidth = timerCar.getBoundingClientRect ? timerCar.getBoundingClientRect().width : (timerCar.offsetWidth || 40);
-            const availableWidth = containerWidth - 30 - carWidth; // 15px padding each side
+            const availableWidth = containerWidth - 30 - carWidth;
 
             if (availableWidth > 0) {
                 const moveDistance = (percentageElapsed / 100) * availableWidth;
@@ -84,7 +90,6 @@ function updateDisplay(seconds, totalSecs) {
                 timerCar.style.transform = 'translateX(0px)';
             }
         } else if (timerCar) {
-            // Reset car position smoothly if not in focus mode
             timerCar.style.transform = 'translateX(0px)';
         }
     } catch (e) {
@@ -100,20 +105,17 @@ function startTimerAction() {
     if (!worker) {
          console.error("Worker not available."); return;
     }
-    if (!isPaused) { // Prevent starting if already running
+    if (!isPaused) {
         console.warn("Timer already running, ignoring start command.");
         return;
     }
 
-    console.log("Executing startTimerAction..."); // Log start of function
+    console.log("Executing startTimerAction...");
     isPaused = false;
     statusMessage.textContent = currentMode === 'focus' ? "Focus Time" : "Break Time";
     startPauseButton.textContent = "Pause";
 
-    // Calculate total seconds for the current mode
     currentTotalSeconds = (currentMode === 'focus' ? FOCUS_TIME_MINUTES : BREAK_TIME_MINUTES) * SECONDS_IN_MINUTE;
-
-    // Determine starting seconds: use remaining if > 0, else use total for the mode
     const startSeconds = (currentSecondsRemaining > 0 && currentSecondsRemaining < currentTotalSeconds) ? currentSecondsRemaining : currentTotalSeconds;
 
     worker.postMessage({
@@ -129,12 +131,12 @@ function pauseTimerAction() {
     if (!worker) {
          console.error("Worker not available."); return;
     }
-     if (isPaused) { // Prevent pausing if already paused
+     if (isPaused) {
         console.warn("Timer already paused, ignoring pause command.");
         return;
     }
 
-    console.log("Executing pauseTimerAction..."); // Log start of function
+    console.log("Executing pauseTimerAction...");
     isPaused = true;
     statusMessage.textContent = "Paused";
     startPauseButton.textContent = "Start";
@@ -147,20 +149,18 @@ function resetTimerAction() {
          console.error("Worker not available."); return;
     }
 
-    console.log("Executing resetTimerAction..."); // Log start of function
+    console.log("Executing resetTimerAction...");
     isPaused = true;
     currentMode = 'focus';
     currentTotalSeconds = FOCUS_TIME_MINUTES * SECONDS_IN_MINUTE;
-    currentSecondsRemaining = currentTotalSeconds; // Reset local time tracking
+    currentSecondsRemaining = currentTotalSeconds;
 
     statusMessage.textContent = "Ready to Focus";
     startPauseButton.textContent = "Start";
 
-    // Tell the worker to reset and provide the initial focus time
     worker.postMessage({ command: 'reset', totalSeconds: currentTotalSeconds });
     console.log('Main sent: reset', { totalSeconds: currentTotalSeconds });
 
-    // Update display immediately to show 30:00
     updateDisplay(currentSecondsRemaining, currentTotalSeconds);
 }
 
@@ -170,10 +170,21 @@ function handleTimerCompletion(completedMode) {
     console.log(`Handling completion of ${completedMode} mode.`);
     isPaused = true; // Timer stops when complete
 
-    // Use alert for now, replace with sound or other notification later
-    alert(`${completedMode === 'focus' ? 'Focus' : 'Break'} session complete! Click Start for the next phase.`);
+    // --- Play Sound or Show Alert ---
+    if (completedMode === 'focus') {
+        // Try to play the bell sound
+        focusCompleteSound.play().catch(error => {
+            // Playback might fail if user hasn't interacted recently
+            console.warn("Audio playback failed (might require user interaction first):", error);
+            alert("Focus session complete! Time for a break."); // Fallback alert
+        });
+    } else { // Completed break mode
+         alert("Break session complete! Time to focus.");
+    }
+    // --- End Sound/Alert ---
 
-    // Switch to the other mode
+
+    // --- Switch Mode Logic ---
     if (completedMode === 'focus') {
         currentMode = 'break';
         currentTotalSeconds = BREAK_TIME_MINUTES * SECONDS_IN_MINUTE;
@@ -187,41 +198,38 @@ function handleTimerCompletion(completedMode) {
     }
 
     startPauseButton.textContent = "Start"; // Ensure button says "Start" for next phase
-
-    // Update the display for the new mode, showing the full time (e.g., 05:00)
-    updateDisplay(currentSecondsRemaining, currentTotalSeconds);
+    updateDisplay(currentSecondsRemaining, currentTotalSeconds); // Update display for the new mode
 }
 
 // --- Task Management Functions ---
 
 function addTaskToList(text) {
-    try { // Add error handling for task creation
+    try {
         const taskItem = document.createElement('div');
         taskItem.classList.add('task-item');
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.classList.add('task-checkbox');
-        checkbox.addEventListener('change', handleTaskCompletion); // Attach listener
+        checkbox.addEventListener('change', handleTaskCompletion);
 
         const taskLabel = document.createElement('span');
         taskLabel.textContent = text;
         taskLabel.classList.add('task-label');
 
         const deleteButton = document.createElement('button');
-        deleteButton.textContent = '✕'; // Multiplication 'X'
+        deleteButton.textContent = '✕';
         deleteButton.classList.add('task-delete-button');
         deleteButton.title = 'Delete Task';
         deleteButton.addEventListener('click', () => {
-            taskItem.remove(); // Remove the task item DIV when delete is clicked
+            taskItem.remove();
             console.log("Task removed:", text);
         });
 
         taskItem.appendChild(checkbox);
         taskItem.appendChild(taskLabel);
-        taskItem.appendChild(deleteButton); // Append the delete button
+        taskItem.appendChild(deleteButton);
 
-        // Check if taskListArea exists before appending
         if (taskListArea) {
              taskListArea.appendChild(taskItem);
              console.log("Task added:", text);
@@ -236,9 +244,8 @@ function addTaskToList(text) {
 
 function handleTaskCompletion(event) {
     const checkbox = event.target;
-    // Find the closest parent element with the class 'task-item'
     const taskItem = checkbox.closest('.task-item');
-    if (taskItem) { // Ensure taskItem was found
+    if (taskItem) {
         if (checkbox.checked) {
             taskItem.classList.add('completed');
             console.log("Task marked complete");
@@ -252,7 +259,7 @@ function handleTaskCompletion(event) {
 }
 
 // --- Current Time Function ---
-let currentTimeIntervalId = null; // Store interval ID to potentially clear later
+let currentTimeIntervalId = null;
 
 function updateCurrentTime() {
     try {
@@ -266,17 +273,16 @@ function updateCurrentTime() {
         };
         const formatter = new Intl.DateTimeFormat('en-US', options);
         const formattedTime = formatter.format(now);
-        // Check if the display element exists
         if (currentTimeDisplay) {
              currentTimeDisplay.textContent = `Central Time: ${formattedTime}`;
         } else {
              console.error("Current time display element not found!");
-             if (currentTimeIntervalId) clearInterval(currentTimeIntervalId); // Stop trying if element missing
+             if (currentTimeIntervalId) clearInterval(currentTimeIntervalId);
         }
     } catch (error) {
         console.error("Error updating current time:", error);
         if (currentTimeDisplay) currentTimeDisplay.textContent = "Current time unavailable.";
-        if (currentTimeIntervalId) clearInterval(currentTimeIntervalId); // Stop interval on error
+        if (currentTimeIntervalId) clearInterval(currentTimeIntervalId);
     }
 }
 
@@ -284,7 +290,6 @@ function updateCurrentTime() {
 function initializeApp() {
     console.log("Initializing App...");
 
-    // Check for Web Worker support
     if (window.Worker) {
         console.log("Web Workers supported. Creating worker...");
         try {
@@ -294,7 +299,7 @@ function initializeApp() {
             // --- Setup Worker Message Listener ---
             worker.onmessage = function(event) {
                 const data = event.data;
-                // console.log('Main received message:', data); // Verbose log for debugging
+                // console.log('Main received message:', data);
 
                 switch (data.type) {
                     case 'tick':
@@ -308,13 +313,11 @@ function initializeApp() {
                         break;
                     case 'paused':
                         console.log('Worker confirmed pause at:', data.seconds);
-                        // Update local state if needed, though pauseTimerAction already did
                         currentSecondsRemaining = data.seconds;
-                         updateDisplay(currentSecondsRemaining, currentTotalSeconds); // Ensure UI sync on pause confirmation
+                         updateDisplay(currentSecondsRemaining, currentTotalSeconds);
                         break;
                     case 'resetComplete':
                         console.log('Worker confirmed reset.');
-                        // Worker sends back initial times after resetting itself
                          currentSecondsRemaining = data.seconds;
                          currentTotalSeconds = data.total;
                         updateDisplay(currentSecondsRemaining, currentTotalSeconds);
@@ -328,10 +331,9 @@ function initializeApp() {
             worker.onerror = function(error) {
                 console.error("!!! Error in timer worker:", error.message, error);
                 statusMessage.textContent = "Timer Error!";
-                // Disable timer buttons if worker fails critically
                 startPauseButton.disabled = true;
                 restartButton.disabled = true;
-                startPauseButton.style.backgroundColor = '#aaa'; // Indicate disabled state
+                startPauseButton.style.backgroundColor = '#aaa';
                 restartButton.style.backgroundColor = '#aaa';
             };
 
@@ -340,24 +342,21 @@ function initializeApp() {
         } catch (e) {
              console.error("!!! Failed to create Web Worker:", e);
              statusMessage.textContent = "Timer Init Failed!";
-             // Disable buttons if worker creation fails
              startPauseButton.disabled = true;
              restartButton.disabled = true;
         }
 
     } else {
-        // Fallback if Web Workers are not supported
         console.warn("Web Workers are not supported in this browser.");
         statusMessage.textContent = "Browser lacks worker support!";
-        startPauseButton.style.display = 'none'; // Hide timer buttons
+        startPauseButton.style.display = 'none';
         restartButton.style.display = 'none';
     }
 
     // --- Attach Event Listeners ---
-    // Ensure elements exist before adding listeners
     if (startPauseButton) {
         startPauseButton.addEventListener('click', () => {
-            console.log("Start/Pause button clicked. isPaused:", isPaused); // Log click
+            console.log("Start/Pause button clicked. isPaused:", isPaused);
             if (isPaused) {
                 startTimerAction();
             } else {
@@ -368,14 +367,14 @@ function initializeApp() {
 
     if (restartButton) {
         restartButton.addEventListener('click', () => {
-            console.log("Restart button clicked."); // Log click
+            console.log("Restart button clicked.");
             resetTimerAction();
         });
     } else console.error("Restart button not found!");
 
     if (addTaskButton && taskInput) {
         addTaskButton.addEventListener('click', () => {
-            console.log("Add task button clicked."); // Log click
+            console.log("Add task button clicked.");
             const taskText = taskInput.value.trim();
             if (taskText) {
                 addTaskToList(taskText);
@@ -388,9 +387,9 @@ function initializeApp() {
 
         taskInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter' || e.keyCode === 13) {
-                console.log("Enter key pressed in task input."); // Log keypress
-                e.preventDefault(); // Prevent default form submission behavior
-                addTaskButton.click(); // Simulate click on add button
+                console.log("Enter key pressed in task input.");
+                e.preventDefault();
+                addTaskButton.click();
             }
         });
     } else console.error("Task input or add button not found!");
@@ -398,9 +397,8 @@ function initializeApp() {
     console.log("Event listeners attached.");
 
     // --- Initial UI State & Timers ---
-    resetTimerAction(); // Reset state and update display initially (sends message to worker too)
-    updateCurrentTime(); // Call current time update once immediately
-    // Start interval for current time display AFTER ensuring the element exists
+    resetTimerAction();
+    updateCurrentTime();
     if (currentTimeDisplay) {
         currentTimeIntervalId = setInterval(updateCurrentTime, 1000);
         console.log("Current time update interval started.");
@@ -410,5 +408,4 @@ function initializeApp() {
 }
 
 // --- Run Initialization ---
-// Wait for the DOM to be fully loaded before running the initialization
 document.addEventListener('DOMContentLoaded', initializeApp);
