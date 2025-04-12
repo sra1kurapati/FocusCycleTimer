@@ -1,0 +1,245 @@
+/* Basic Reset & Box Sizing */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* Makes width/height calculations include padding and border */
+}
+
+/* Body Styling - Font and Split Background */
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; /* Modern system fonts */
+    line-height: 1.6; /* Improves readability */
+    /* Split background: 50% black on left, 50% white on right */
+    background: linear-gradient(to right, #1a1a1a 50%, #f4f4f4 50%);
+    background-attachment: fixed; /* Keeps background fixed during scroll */
+    color: #333; /* Default text color (will be overridden in dark half) */
+    min-height: 100vh; /* Ensure body takes at least full viewport height */
+    display: flex; /* Using flexbox to easily center the app container */
+    justify-content: center; /* Horizontally center */
+    align-items: center; /* Vertically center */
+    padding: 15px; /* Add padding for smaller screens */
+}
+
+/* Main Application Container */
+.app-container {
+    background-color: rgba(255, 255, 255, 0.85); /* Slightly less transparent white background */
+    padding: 30px;
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); /* Slightly stronger shadow */
+    width: 95%; /* Use 95% of the available width */
+    max-width: 500px; /* But don't let it get wider than 500px */
+    text-align: center; /* Center text within the container */
+    /* We might adjust background later for dark mode compatibility */
+    position: relative; /* Make this the positioning context for absolute children (like the car) */
+    padding-bottom: 60px; /* Increased padding at the bottom for the road/car */
+    overflow: hidden; /* Hide potential overflow if car calculation is slightly off */
+}
+
+/* Header Styling */
+header {
+    margin-bottom: 15px; /* Space below the header */
+    display: flex; /* Arrange title and toggle button */
+    justify-content: space-between; /* Push title left, button right */
+    align-items: center; /* Vertically align them */
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+    gap: 10px; /* Space between items if they wrap */
+}
+
+header h1 {
+    font-size: 1.8em; /* Make the title larger */
+    color: #2c3e50; /* A darker blue-grey color */
+}
+
+#theme-toggle {
+    padding: 5px 10px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #eee;
+    font-size: 0.9em;
+}
+
+/* Current Time Display Styling */
+.current-time {
+    font-size: 0.9em; /* Slightly smaller font */
+    color: #555; /* Greyish color */
+    margin-bottom: 20px; /* Space below the time */
+    text-align: center; /* Ensure it's centered */
+}
+
+/* Timer Section Styling */
+.timer-section {
+    margin-bottom: 30px; /* Space below the timer section */
+}
+
+#status-message {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #3498db; /* A nice blue color for the status */
+    min-height: 1.5em; /* Prevent layout shift when text changes */
+}
+
+#timer-display {
+    font-size: 4em; /* Large display for the time */
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #2c3e50;
+    letter-spacing: 2px; /* Add some spacing between characters */
+}
+
+/* Progress Bar Basic Styles */
+.progress-bar-container {
+    width: 80%;
+    height: 10px;
+    background-color: #e0e0e0; /* Light grey background */
+    border-radius: 5px;
+    margin: 15px auto; /* Center horizontally */
+    overflow: hidden; /* Hide overflow */
+}
+
+#progress-bar {
+    height: 100%;
+    width: 0%; /* Start with 0 width - will be updated by JS */
+    /* Color set by JS based on mode */
+    border-radius: 5px;
+    transition: width 0.5s ease-out, background-color 0.5s ease; /* Smooth width and color transition */
+}
+
+
+/* Button Styling */
+.timer-controls button,
+.task-input-area button {
+    padding: 10px 20px;
+    margin: 5px;
+    font-size: 1em;
+    cursor: pointer; /* Hand cursor on hover */
+    border: none;
+    border-radius: 5px;
+    background-color: #3498db; /* Blue background */
+    color: white; /* White text */
+    transition: background-color 0.3s ease, transform 0.1s ease; /* Smooth transition on hover */
+}
+
+.timer-controls button:hover,
+.task-input-area button:hover {
+    background-color: #2980b9; /* Darker blue on hover */
+}
+
+.timer-controls button:active,
+.task-input-area button:active {
+    transform: scale(0.98); /* Slightly shrink button when clicked */
+}
+
+/* Task Section Styling */
+.task-section h2 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.task-input-area {
+    display: flex; /* Align input and button horizontally */
+    margin-bottom: 20px;
+}
+
+#task-input {
+    flex-grow: 1; /* Allow input to take available space */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px 0 0 5px; /* Round left corners */
+    font-size: 1em;
+}
+
+#add-task-button {
+    border-radius: 0 5px 5px 0; /* Round right corners */
+}
+
+/* Task List Area Styling */
+#task-list-area {
+    text-align: left; /* Align tasks to the left */
+    margin-top: 20px; /* Add some space above the list */
+    max-height: 150px; /* Limit height and allow scrolling if needed */
+    overflow-y: auto; /* Add vertical scrollbar if content overflows */
+    padding-right: 5px; /* Add space for scrollbar */
+}
+
+/* Individual Task Item Styling */
+.task-item {
+    background-color: #fdfdfd; /* Very light background for tasks */
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    display: flex; /* Align items horizontally */
+    align-items: center; /* Vertically center checkbox and text */
+    border: 1px solid #eee;
+    transition: background-color 0.3s ease; /* Smooth background transition */
+}
+
+.task-item:hover {
+     background-color: #f5f5f5; /* Slightly darker on hover */
+}
+
+.task-item input[type="checkbox"] {
+    margin-right: 12px; /* Space between checkbox and text */
+    cursor: pointer;
+    flex-shrink: 0; /* Prevent checkbox from shrinking */
+    transform: scale(1.2);
+}
+
+.task-item .task-label {
+   flex-grow: 1; /* Allow label to take up remaining space */
+   word-break: break-word; /* Prevent long words from overflowing */
+   line-height: 1.4; /* Adjust line height for task text */
+}
+
+/* Style for completed tasks (when checkbox is checked) */
+.task-item.completed .task-label {
+    text-decoration: line-through; /* Strike through text */
+    color: #999; /* Dim the text color */
+    font-style: italic;
+}
+
+/* Style for the delete button */
+.task-delete-button {
+    background: none;
+    border: none;
+    color: #bbb; /* Lighter grey */
+    cursor: pointer;
+    font-size: 1.2em; /* Slightly larger 'X' */
+    font-weight: bold;
+    padding: 0 5px;
+    margin-left: 10px; /* Space between label and delete button */
+    transition: color 0.2s ease;
+    flex-shrink: 0; /* Prevent button from shrinking */
+    line-height: 1; /* Ensure consistent alignment */
+}
+
+.task-delete-button:hover {
+    color: #e74c3c; /* Red color on hover */
+}
+
+
+/* ==== Car Animation Styles ==== */
+
+.road {
+    position: absolute; /* Position relative to app-container */
+    bottom: 15px;      /* Distance from container bottom */
+    left: 15px;       /* Padding from left */
+    right: 15px;      /* Padding from right */
+    height: 2px;       /* A thin line for the road */
+    background-color: #bdc3c7; /* Light grey color */
+}
+
+#timer-car {
+    position: absolute; /* Position relative to app-container */
+    bottom: 18px;      /* Position slightly above the road line */
+    left: 15px;       /* Start at the left padding edge */
+    width: 40px;       /* Width of the SVG car */
+    height: auto;      /* Maintain aspect ratio */
+    /* Initial horizontal position */
+    transform: translateX(0px);
+    /* Smooth transition for movement (1 second duration, linear speed) */
+    transition: transform 1s linear; /* Animate changes to transform property */
+}
+
+/* ============================ */

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusCycle Timer</title>
+    <!-- Link to our CSS file -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Main Application Container -->
+    <div class="app-container">
+
+        <header>
+            <h1>FocusCycle Timer</h1>
+             <!-- Theme toggle placeholder -->
+            <button id="theme-toggle">Toggle Theme</button>
+        </header>
+
+        <!-- Current Time Display -->
+        <div id="current-time-display" class="current-time">Loading time...</div>
+
+        <main>
+            <!-- Timer Section -->
+            <section class="timer-section">
+                <div id="status-message">Ready to Focus</div>
+                <div id="timer-display">30:00</div>
+                 <!-- Progress bar -->
+                <div class="progress-bar-container">
+                    <div id="progress-bar"></div>
+                </div>
+                <div class="timer-controls">
+                    <button id="start-pause-button">Start</button>
+                    <button id="restart-button">Restart</button>
+                </div>
+            </section>
+
+            <!-- Task Management Section -->
+            <section class="task-section">
+                <h2>Current Task</h2>
+                <div class="task-input-area">
+                    <input type="text" id="task-input" placeholder="Enter main task name">
+                    <button id="add-task-button">Add Task</button>
+                </div>
+                <div id="task-list-area">
+                    <!-- Tasks will be added here by JavaScript -->
+                </div>
+            </section>
+        </main> <!-- End of main content -->
+
+        <!-- ==== Car Animation Area ==== -->
+        <div class="road">
+             <!-- Simple SVG Car -->
+             <svg id="timer-car" width="40" height="20" viewBox="0 0 100 50" xmlns="http://www.w3.org/2000/svg">
+                 <rect x="10" y="20" width="80" height="25" rx="5" ry="5" fill="#e74c3c"/> <!-- Car Body -->
+                 <rect x="20" y="10" width="40" height="15" fill="#f39c12"/> <!-- Car Roof/Window -->
+                 <circle cx="30" cy="45" r="8" fill="#2c3e50"/> <!-- Wheel 1 -->
+                 <circle cx="70" cy="45" r="8" fill="#2c3e50"/> <!-- Wheel 2 -->
+             </svg>
+        </div>
+        <!-- ============================ -->
+
+
+    </div> <!-- End of app-container -->
+
+    <!-- Link to our JavaScript file (must be at the end of body) -->
+    <script src="script.js"></script>
+</body>
+</html>
